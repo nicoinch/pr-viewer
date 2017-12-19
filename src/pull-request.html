@@ -1,0 +1,129 @@
+<!-- import polymer-element -->
+<html>
+    
+      <!-- import polymer-element -->
+      <head>
+        <link rel="import" href="../bower_components/polymer/polymer-element.html" />
+        <link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html" />
+        <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html" />
+        <link rel="import" href="../bower_components/iron-icons/iron-icons.html" />
+        <link rel="import" href="../bower_components/iron-icons/image-icons.html" />
+        <link rel="import" href="../bower_components/paper-item/paper-item.html" />
+        <link rel="import" href="../bower_components/paper-item/paper-icon-item.html" />
+        <link rel="import" href="../bower_components/paper-item/paper-item-body.html" />
+        <link rel="import" href="../bower_components/paper-styles/paper-styles.html" />
+      </head>
+    
+      <body>
+        <dom-module id="pull-request">
+          <template>
+            <custom-style>
+              <style is="custom-style">
+              .green {
+                background-color: var(--paper-green-200);
+                border-radius: 100px;
+                color: white;
+              }
+              .red {
+                background-color: var(--paper-red-200);
+                border-radius: 100px;
+                color: white;
+              }
+              iron-icon {
+                --iron-icon-height: 95%;
+              }
+              a {
+                color:  var(--paper-grey-900);
+                text-decoration: none !important;
+              }
+              a paper-icon-item:hover {
+                background-color: var(--paper-grey-200);
+                cursor: pointer;
+              }
+              paper-icon-item {
+                display: flex;
+                align-items: stretch;
+                --paper-item-icon-width: 46px;
+              }
+              paper-item-body {
+                border-bottom: 1px solid var(--paper-grey-300);
+                padding: 8px 0;
+              }
+              </style>
+            </custom-style>
+            
+            <iron-ajax  auto="" 
+                        url="https://api.github.com/repos/webadeo/[[repository]]/statuses/[[pullRequest.head.sha]]" 
+                        headers="[[_computeHeader()]]" 
+                        handle-as="json" 
+                        on-response="_buildStatuses"
+                        last-response="{{statuses}}"></iron-ajax>
+                 
+            <a href="https://github.com/webadeo/[[repository]]/pull/[[pullRequest.number]]" target="_blank">
+              <paper-icon-item>
+                
+                <template is="dom-if" if="[[!_isEmpty(messages)]]">
+                  <iron-icon class="green" icon="done" slot="item-icon"></iron-icon>
+                </template>
+                
+                <template is="dom-if" if="[[_isEmpty(messages)]]">
+                  <iron-icon class="red" icon="close" slot="item-icon"></iron-icon>
+                </template>
+                
+                <paper-item-body two-line="">
+                  <div>PR #[[pullRequest.number]] : [[pullRequest.body]]</div>
+                  <template is="dom-repeat" items="[[messages]]" as="message">
+                    <div secondary="">[[message]]</div>
+                  </template>
+                </paper-item-body>
+              </paper-icon-item>
+            </a>
+          </template> 
+          
+          <script>
+            class PullRequest extends Polymer.Element {
+              static get is() { return "pull-request"; }
+              
+              constructor() {
+                super();
+              }
+              
+              static get properties() {
+                return {
+                  repository: {
+                    type: String
+                  },
+                  pullRequest: {
+                    type: Object
+                  }
+                }
+              }
+
+              _computeHeader() {
+                return { Authorization: 'Basic XXX==' };
+              }
+              
+              _buildStatuses() {
+                this.messages = _
+                  .chain(this.statuses)
+                  .groupBy(status => status.context)
+                  .forOwn(messages => {
+                    _.sortBy(messages, message => message.updated_at)
+                  })
+                  .map(messages => _.head(messages))
+                  .filter(messages => messages.state === 'failure')
+                  .map(message => message.description)
+                  .value();
+              }
+              
+              _isEmpty(array) {
+                return array && array.length > 0;
+              }
+            }
+            customElements.define(PullRequest.is, PullRequest);
+          </script>
+        </dom-module>
+      </body>
+    
+    </html>
+    

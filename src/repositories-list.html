@@ -1,0 +1,55 @@
+<!-- import polymer-element -->
+<link rel="import"  href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/loading-placeholder/loading-placeholder.html">
+<link rel="import" href="pull-requests.html">
+
+<dom-module id="repositories-list">
+  <template>
+    <style>
+      .listbox {
+        margin: 8px 0;
+      }
+      .loading-wave > div {
+        background-color: white;
+      }
+    </style>
+    <iron-ajax  auto
+                url="https://api.github.com/orgs/webadeo/repos"
+                headers="[[_computeHeader()]]"
+                handle-as="json"
+                last-response="{{repositories}}"></iron-ajax>
+    <div role="listbox" class="listbox">
+      <template is="dom-repeat" items="[[repositories]]">
+        <pull-requests repository="[[item.name]]"></pull-requests>
+      </template>
+    </div>
+  </template>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.min.js"></script>
+  <script>
+    class RepositoriesList extends Polymer.Element {
+      static get is() { return "repositories-list"; }
+      
+      constructor() {
+        super();
+      }
+
+      attached() {
+        var el = document.getElementById('loader')
+        el.show()
+      }
+      
+      _computeHeader() {
+        return {Authorization: 'Basic XXX=='};
+      }
+    }
+    customElements.define(RepositoriesList.is, RepositoriesList);
+  </script>
+
+</dom-module>
